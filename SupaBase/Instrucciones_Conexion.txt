@@ -1,9 +1,10 @@
 
+NOTA IMPORTANTE: Todos estos pasos son para el backend.
 
 --------------------------- (PASO 1) ----------------------------------------
 Primero definimos las siguientes variables de entorno en el archivo .env del backend
 
-<REEMPLAZA AQUI>
+
 PORT=<REEMPLAZA AQUI>
 SUPABASE_URL=<REEMPLAZA AQUI>
 SUPABASE_SERVICE_ROLE_KEY=<REEMPLAZA AQUI>
@@ -130,7 +131,7 @@ app.listen(PORT, () => {
 
 --------------------------- (PASO 3) ----------------------------------------
 
-Antes de ejecutar lo anterior que hemos puesto de codigo, tenemos que descargar la libreria de supabase, Ejecuta el siguiente comando:
+Antes de ejecutar lo anterior que hemos puesto de codigo, tenemos que descargar la libreria de (supabase), Ejecuta el siguiente comando:
 dentro del directorio del (Backend) TIENE QUE SER DENTRO DEL (BACKEND) entonces abre la terminal de VScode y entra ahi y ejecutalo.
 
 npm install @supabase/supabase-js
@@ -166,4 +167,4 @@ backend/src/config/supabase.js ---> este NO SE MODIFICA MAS, queda asi tal cual.
 backend/src/app.js ----> ESTE ES COMPARTIDO
 backend/src/server.js ----> ESTE ES COMPARTIDO
 
-del resto de codigo de prueba ES MEJOR BORRARLO. y es borrar el codigo NO EL ARCHIVO.
+del resto de codigo de prueba ES MEJOR BORRARLO. y es borrar el codigo, NO EL ARCHIVO.
