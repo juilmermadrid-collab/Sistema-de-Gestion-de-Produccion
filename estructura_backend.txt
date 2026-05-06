@@ -1,0 +1,32 @@
+backend/
+│
+├── src/
+│   │
+│   ├── config/
+│   │   └── supabase.js
+│   │
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── referencias.controller.js
+│   │   ├── pedidos.controller.js
+│   │   ├── ordenes.controller.js
+│   │   ├── selladoras.controller.js
+│   │   ├── planillas.controller.js
+│   │   ├── registros.controller.js
+│   │   └── reportes.controller.js
+│   │
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── referencias.routes.js
+│   │   ├── pedidos.routes.js
+│   │   ├── ordenes.routes.js
+│   │   ├── selladoras.routes.js
+│   │   ├── planillas.routes.js
+│   │   ├── registros.routes.js
+│   │   └── reportes.routes.js
+│   │
+│   ├── app.js
+│   └── server.js
+│
+├── .env
+└── package.json
