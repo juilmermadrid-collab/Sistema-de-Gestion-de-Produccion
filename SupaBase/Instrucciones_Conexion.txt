@@ -1,0 +1,170 @@
+
+NOTA IMPORTANTE: Todos estos pasos son para el backend.
+
+--------------------------- (PASO 1) ----------------------------------------
+Primero definimos las siguientes variables de entorno en el archivo .env del backend
+
+
+PORT=<REEMPLAZA AQUI>
+SUPABASE_URL=<REEMPLAZA AQUI>
+SUPABASE_SERVICE_ROLE_KEY=<REEMPLAZA AQUI>
+
+reemplazar por los valores que se enviaron al grupo de whatsApp
+
+
+--------------------------- (PASO 2) ----------------------------------------
+
+Poner el siguiente codigo de (PRUEBA) es solo de (PRUEBA) es para verificar si la DB esta conectada al proyecto.
+
+-------------------------------------------------------------
+/// PRIMERO: En esta ruta backend/src/config/supabase.js Poner: 
+-------------------------------------------------------------
+
+const { createClient } = require("@supabase/supabase-js");
+require("dotenv").config();
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+module.exports = supabase;
+
+
+-------------------------------------------------------------
+/// SEGUNDO: En esta ruta backend/src/controllers/referencias.controller.js Poner:
+-------------------------------------------------------------
+
+
+const supabase = require("../config/supabase");
+const listarReferencias = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("referencias")
+      .select("*");
+
+    if (error) {
+      return res.status(500).json({
+        conectado: false,
+        mensaje: "Error consultando Supabase",
+        error: error.message,
+      });
+    }
+
+    return res.json({
+      conectado: true,
+      mensaje: "Conexión con Supabase correcta",
+      cantidad: data.length,
+      data,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      conectado: false,
+      mensaje: "Error interno del backend",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  listarReferencias,
+};
+
+
+
+
+-------------------------------------------------------------
+/// TERCERO: En esta ruta backend/src/routes/referencias.routes.js Poner:
+-------------------------------------------------------------
+
+
+const express = require("express");
+const router = express.Router();
+
+const referenciasController = require("../controllers/referencias.controller");
+
+router.get("/", referenciasController.listarReferencias);
+
+module.exports = router;
+
+
+-------------------------------------------------------------
+/// CUARTO: En esta ruta backend/src/app.js Poner:
+-------------------------------------------------------------
+
+
+const express = require("express");
+const cors = require("cors");
+
+const referenciasRoutes = require("./routes/referencias.routes");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.json({
+    mensaje: "API PlastiPak funcionando correctamente",
+  });
+});
+
+app.use("/api/referencias", referenciasRoutes);
+
+module.exports = app;
+
+
+-------------------------------------------------------------
+/// QUINTO: En esta ruta backend/src/server.js Poner:
+-------------------------------------------------------------
+
+
+require("dotenv").config();
+const app = require("./app");
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+  console.log(`Servidor PlastiPak corriendo en http://localhost:${PORT}`);
+});
+
+
+
+--------------------------- (PASO 3) ----------------------------------------
+
+Antes de ejecutar lo anterior que hemos puesto de codigo, tenemos que descargar la libreria de (supabase), Ejecuta el siguiente comando:
+dentro del directorio del (Backend) TIENE QUE SER DENTRO DEL (BACKEND) entonces abre la terminal de VScode y entra ahi y ejecutalo.
+
+npm install @supabase/supabase-js
+
+
+-------------------------------------------------------------
+/// FINALMENTE HACEMOS LA PRUEBA 
+-------------------------------------------------------------
+
+cd C:\Users\crist\Documents\PlastiPak\backend
+Una vez que estemos dentro del backend ejecutamos el comando de aqui abajo:
+
+npm run dev
+
+Despues entramos a la URL
+http://localhost:4000
+
+y nos debe de salir asi tal cual en el navegador
+{"mensaje":"API PlastiPak funcionando correctamente"}
+
+si sale esto ya tienes conectado tu proyecto con la DB
+
+
+NOTA IMPORTANTE:
+despues de hacer la prueba, borramos el codigo de las siguientes rutas:
+
+backend/src/controllers/referencias.controller.js
+backend/src/routes/referencias.routes.js
+
+EL UNICO CODIGO QUE NO SE BORRA SON LOS DE ESTAS RUTAS:
+
+backend/src/config/supabase.js ---> este NO SE MODIFICA MAS, queda asi tal cual.
+backend/src/app.js ----> ESTE ES COMPARTIDO
+backend/src/server.js ----> ESTE ES COMPARTIDO
+
+del resto de codigo de prueba ES MEJOR BORRARLO. y es borrar el codigo, NO EL ARCHIVO.
