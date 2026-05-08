@@ -1,3 +1,12 @@
+<<<<<<< HEAD
+import AppRoutes from "./routes/AppRoutes";
+
+function App() {
+  return <AppRoutes />;
+}
+
+export default App;
+=======
 import { useState } from "react";
 import BuscarReferencias from "./pages/vendedor/BuscarReferencias";
 import CrearPedido from "./pages/vendedor/CrearPedido";
@@ -88,7 +97,14 @@ export default function App() {
       {/* Contenido */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {renderPagina()}
-      </main>
+      </main>import AppRoutes from "./routes/AppRoutes";
+
+function App() {
+  return <AppRoutes />;
+}
+
+export default App;
     </div>
   );
 }
+>>>>>>> b6f21f12907c6b74880c37a26e2130ebe4ebec93
