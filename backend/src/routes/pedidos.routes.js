@@ -1,18 +1,7 @@
-const express = require("express");
-const router = express.Router();
-const {
-  crearPedido,
-  listarPedidos,
-  obtenerPedidoPorId,
-} = require("../controllers/pedidos.controller");
-
-// GET /api/pedidos?vendedor_id=...
-router.get("/", listarPedidos);
-
-// GET /api/pedidos/:id
-router.get("/:id", obtenerPedidoPorId);
-
-// POST /api/pedidos
-router.post("/", crearPedido);
-
+const { Router } = require('express');
+const { listarPedidos, obtenerPedido, consultarDocumentacion } = require('../controllers/pedidos.controller');
+const router = Router();
+router.get('/', listarPedidos);
+router.get('/documentacion', consultarDocumentacion);
+router.get('/:id', obtenerPedido);
 module.exports = router;

@@ -9,6 +9,9 @@ import {
 
 import AuxiliarProduccionRoutes from "../pages/auxiliarProduccion/AuxiliarProduccionRoutes";
 import LiderProduccionRoutes from "../pages/liderProduccion/LiderProduccionRoutes";
+import VendedorRoutes from "../pages/vendedor/VendedorRoutes";
+import OperarioRoutes from "../pages/operario/OperarioRoutes";
+import ModuleSelection from "../pages/ModuleSelection";
 
 const appRoutesStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -167,8 +170,15 @@ const appRoutesStyles = `
 function AppLayout() {
   const location = useLocation();
 
-  const ocultarBarra =
-    location.pathname === "/auxiliar" || location.pathname === "/auxiliar/";
+  const ocultarBarra = location.pathname === "/";
+
+  const moduleLabel = () => {
+    if (location.pathname.startsWith("/auxiliar")) return "Auxiliar de Producción";
+    if (location.pathname.startsWith("/lider")) return "Líder de Producción";
+    if (location.pathname.startsWith("/vendedor")) return "Vendedor";
+    if (location.pathname.startsWith("/operario")) return "Operario";
+    return "Sistema de Producción";
+  };
 
   return (
     <>
@@ -177,7 +187,7 @@ function AppLayout() {
       {!ocultarBarra && (
         <nav className="app-nav">
           <div className="app-nav-inner">
-            <Link to="/auxiliar" className="app-nav-back">
+            <Link to="/" className="app-nav-back">
               <span className="app-nav-back-icon">
                 <svg
                   fill="none"
@@ -212,7 +222,7 @@ function AppLayout() {
               </div>
 
               <span className="app-nav-logo-text">
-                Auxiliar <span>Producción</span>
+                {moduleLabel()}
               </span>
 
               <div className="app-nav-logo-divider" />
@@ -228,9 +238,12 @@ function AppLayout() {
       )}
 
       <Routes>
-        <Route path="/" element={<Navigate to="/auxiliar" />} />
+        <Route path="/" element={<ModuleSelection />} />
         <Route path="/auxiliar/*" element={<AuxiliarProduccionRoutes />} />
         <Route path="/lider/*" element={<LiderProduccionRoutes />} />
+        <Route path="/vendedor/*" element={<VendedorRoutes />} />
+        <Route path="/operario/*" element={<OperarioRoutes />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
   );

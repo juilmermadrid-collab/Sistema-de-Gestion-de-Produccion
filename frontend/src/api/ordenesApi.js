@@ -1,11 +1,8 @@
-import api from "./axiosConfig";
-
-export const obtenerOrdenesPorProgramar = async () => {
-  const response = await api.get("/ordenes/por-programar");
-  return response.data;
-};
-
-export const programarOrden = async (id, datos) => {
-  const response = await api.put(`/ordenes/${id}/programar`, datos);
-  return response.data;
-};
+import axiosInstance from './axiosConfig';
+export const getOrdenes = (params = {}) => axiosInstance.get('/ordenes', { params });
+export const getOrdenById = (id) => axiosInstance.get(`/ordenes/${id}`);
+export const crearOrden = (payload) => axiosInstance.post('/ordenes', payload);
+export const cambiarEstadoOrden = (id, estado_orden) => axiosInstance.patch(`/ordenes/${id}/estado`, { estado_orden });
+export const cambiarEstadoProduccionItem = (pedido_item_id, estado_produccion) => axiosInstance.patch(`/ordenes/pedido-item/${pedido_item_id}/estado-produccion`, { estado_produccion });
+export const obtenerOrdenesPorProgramar = (params = {}) =>
+  axiosInstance.get('/ordenes', { params: { estado_orden: 'por_programar', ...params } });

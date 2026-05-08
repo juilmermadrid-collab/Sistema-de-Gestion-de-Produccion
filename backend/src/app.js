@@ -1,31 +1,17 @@
-const express = require("express");
-const cors = require("cors");
-
-const referenciasRoutes = require("./routes/referencias.routes");
-const pedidosRoutes = require("./routes/pedidos.routes");
-const selladorasRoutes = require("./routes/selladoras.routes");
-const planillasRoutes = require("./routes/planillas.routes");
-const ordenesRoutes = require("./routes/ordenes.routes");
-const registrosRoutes = require("./routes/registros.routes");
-const reportesRoutes = require("./routes/reportes.routes");
+const express = require('express');
+const cors = require('cors');
+const referenciasRoutes = require('./routes/referencias.routes');
+const ordenesRoutes     = require('./routes/ordenes.routes');
+const pedidosRoutes     = require('./routes/pedidos.routes');
 
 const app = express();
-
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.json({
-    mensaje: "API PlastiPak funcionando correctamente",
-  });
-});
+app.get('/api/health', (req, res) => res.json({ ok: true, mensaje: 'API corriendo' }));
+app.use('/api/referencias', referenciasRoutes);
+app.use('/api/ordenes',     ordenesRoutes);
+app.use('/api/pedidos',     pedidosRoutes);
 
-app.use("/api/referencias", referenciasRoutes);
-app.use("/api/pedidos", pedidosRoutes);
-app.use("/api/selladoras", selladorasRoutes);
-app.use("/api/planillas", planillasRoutes);
-app.use("/api/ordenes", ordenesRoutes);
-app.use("/api/registros", registrosRoutes);
-app.use("/api/reportes", reportesRoutes);
-
+app.use((req, res) => res.status(404).json({ ok: false, mensaje: 'Ruta no encontrada' }));
 module.exports = app;

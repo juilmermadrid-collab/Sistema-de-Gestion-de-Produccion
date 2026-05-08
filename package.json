@@ -1,6 +1,16 @@
 {
+  "name": "sistema-gestion-produccion",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de producción",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "install-all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix backend"
+  },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.4",
+    "concurrently": "^8.2.2",
     "tailwindcss": "^4.2.4"
   }
 }

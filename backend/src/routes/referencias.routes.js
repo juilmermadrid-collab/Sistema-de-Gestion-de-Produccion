@@ -1,14 +1,9 @@
-const express = require("express");
-const router = express.Router();
-const {
-  buscarReferencias,
-  obtenerReferenciaPorId,
-} = require("../controllers/referencias.controller");
-
-// GET /api/referencias?busqueda=...&tipo_producto=...&materia_prima=...&ancho=...&sellado=...
-router.get("/", buscarReferencias);
-
-// GET /api/referencias/:id
-router.get("/:id", obtenerReferenciaPorId);
-
+const { Router } = require('express');
+const { listarReferencias, obtenerReferencia, crearReferencia, editarReferencia, cambiarEstadoReferencia } = require('../controllers/referencias.controller');
+const router = Router();
+router.get('/', listarReferencias);
+router.get('/:id', obtenerReferencia);
+router.post('/', crearReferencia);
+router.put('/:id', editarReferencia);
+router.patch('/:id/estado', cambiarEstadoReferencia);
 module.exports = router;
