@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 
+const referenciasRoutes = require("./routes/referencias.routes");
+const pedidosRoutes = require("./routes/pedidos.routes");
 const selladorasRoutes = require("./routes/selladoras.routes");
 const planillasRoutes = require("./routes/planillas.routes");
 const ordenesRoutes = require("./routes/ordenes.routes");
@@ -18,6 +20,8 @@ app.get("/", (req, res) => {
   });
 });
 
+app.use("/api/referencias", referenciasRoutes);
+app.use("/api/pedidos", pedidosRoutes);
 app.use("/api/selladoras", selladorasRoutes);
 app.use("/api/planillas", planillasRoutes);
 app.use("/api/ordenes", ordenesRoutes);
