@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { buscarReferencias } from "../../api/referenciasApi";
 
 export default function BuscarReferencias({ onAgregarAlPedido }) {
@@ -14,12 +14,29 @@ export default function BuscarReferencias({ onAgregarAlPedido }) {
   const [error, setError] = useState("");
   const [agregados, setAgregados] = useState([]);
 
+  // ✅ Cargar todas las referencias al entrar a la pantalla
+  useEffect(() => {
+    const cargarTodas = async () => {
+      try {
+        setCargando(true);
+        const data = await buscarReferencias({
+          busqueda: "",
+          tipo_producto: "",
+          materia_prima: "",
+          ancho: "",
+          sellado: "",
+        });
+        setResultados(data);
+      } catch {
+        setError("Error al cargar referencias.");
+      } finally {
+        setCargando(false);
+      }
+    };
+    cargarTodas();
+  }, []);
+
   const handleBuscar = async () => {
-    const hayFiltro = Object.values(filtros).some((v) => v.trim() !== "");
-    if (!hayFiltro) {
-      setError("Ingresa al menos un criterio de búsqueda.");
-      return;
-    }
     try {
       setCargando(true);
       setError("");
@@ -129,25 +146,39 @@ export default function BuscarReferencias({ onAgregarAlPedido }) {
         </div>
       )}
 
-      {/* Resultados */}
-      {resultados.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-700">Resultados ({resultados.length})</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+      {/* ✅ Tabla siempre visible */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-gray-700">
+            {cargando ? "Cargando..." : `Referencias disponibles (${resultados.length})`}
+          </h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                {["Referencia", "Nombre", "Tipo", "Materia Prima", "Ancho", "Sellado", "Valor Unit.", ""].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {cargando ? (
                 <tr>
-                  {["Referencia", "Nombre", "Tipo", "Materia Prima", "Ancho", "Sellado", "Valor Unit.", ""].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      {h}
-                    </th>
-                  ))}
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">
+                    🔄 Cargando referencias...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {resultados.map((ref) => (
+              ) : resultados.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">
+                    No hay referencias disponibles.
+                  </td>
+                </tr>
+              ) : (
+                resultados.map((ref) => (
                   <tr key={ref.id} className="hover:bg-blue-50 transition-colors">
                     <td className="px-4 py-3 text-sm font-mono text-blue-700">{ref.referencia_corta}</td>
                     <td className="px-4 py-3 text-sm font-medium text-gray-800">{ref.nombre}</td>
@@ -176,12 +207,12 @@ export default function BuscarReferencias({ onAgregarAlPedido }) {
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 }
