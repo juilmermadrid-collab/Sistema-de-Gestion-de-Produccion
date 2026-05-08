@@ -1,91 +1,182 @@
-const { supabase } = require('../config/supabase');
+const supabase = require('../config/supabase');
 
-const listarReferencias = async (req, res) => {
+// =====================================================
+// 1. OBTENER TODAS LAS REFERENCIAS
+// =====================================================
+exports.getAll = async (req, res) => {
   try {
-    const { q, tipo_producto, materia_prima, ancho, sellado, estado, page = 1, limit = 20 } = req.query;
-    let query = supabase.from('referencias').select(`id, referencia, referencia_corta, nombre, grupo, estado, descripcion, codigo_barras, presentacion, unidad_medida, costo, impuesto, valor_unitario, tipo_producto, materia_prima, color, troquelado, ancho, fuelle_izquierdo, fuelle_derecho, alto, fuelle_superior, fuelle_fondo, calibre, impresion, colores, tipo_cliente, tipo_impresion, sellado, tratado_cara, medida, requiere_extrusion, requiere_impresion, requiere_refilado, requiere_sellado, creada_por, created_at, updated_at, referencia_precios (id, categoria, precio, incluye_impuesto)`, { count: 'exact' });
-    if (q?.trim()) query = query.or(`referencia.ilike.%${q}%,referencia_corta.ilike.%${q}%,nombre.ilike.%${q}%,descripcion.ilike.%${q}%`);
-    if (tipo_producto) query = query.eq('tipo_producto', tipo_producto);
-    if (materia_prima) query = query.eq('materia_prima', materia_prima);
-    if (ancho) query = query.eq('ancho', parseFloat(ancho));
-    if (sellado) query = query.eq('sellado', sellado);
-    if (estado && estado !== 'todas') query = query.eq('estado', estado);
-    else if (!estado) query = query.eq('estado', 'activa');
-    const from = (parseInt(page) - 1) * parseInt(limit);
-    query = query.range(from, from + parseInt(limit) - 1).order('nombre', { ascending: true });
-    const { data, error, count } = await query;
+    const { data, error } = await supabase
+      .from('referencias')
+      .select('*')
+      .order('referencia', { ascending: true });
+
     if (error) throw error;
-    return res.status(200).json({ ok: true, total: count, page: parseInt(page), limit: parseInt(limit), data });
+
+    res.json(data || []);
   } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
+    console.error('Error en getAll referencias:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-const obtenerReferencia = async (req, res) => {
+// =====================================================
+// 2. OBTENER REFERENCIA POR ID
+// =====================================================
+exports.getById = async (req, res) => {
   try {
-    const { data, error } = await supabase.from('referencias').select(`*, referencia_precios (id, categoria, precio, incluye_impuesto)`).eq('id', req.params.id).single();
+    const { id } = req.params;
+    
+    const { data, error } = await supabase
+      .from('referencias')
+      .select('*')
+      .eq('id', id)
+      .single();
+
     if (error) throw error;
-    if (!data) return res.status(404).json({ ok: false, mensaje: 'Referencia no encontrada' });
-    return res.status(200).json({ ok: true, data });
+    if (!data) return res.status(404).json({ error: 'Referencia no encontrada' });
+
+    res.json(data);
   } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
+    console.error('Error en getById referencia:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-const crearReferencia = async (req, res) => {
+// =====================================================
+// 3. CREAR NUEVA REFERENCIA
+// =====================================================
+exports.create = async (req, res) => {
   try {
-    const { precios = [], ...campos } = req.body;
-    const obligatorios = ['referencia','referencia_corta','nombre','tipo_producto','materia_prima','ancho','sellado','medida'];
-    for (const c of obligatorios) {
-      if (!campos[c]) return res.status(400).json({ ok: false, mensaje: `El campo '${c}' es obligatorio.` });
-    }
-    const { data: nuevaRef, error } = await supabase.from('referencias').insert({ ...campos }).select().single();
-    if (error) {
-      if (error.code === '23505') return res.status(409).json({ ok: false, mensaje: 'Ya existe una referencia con ese código.' });
-      throw error;
-    }
-    if (precios.length > 0) {
-      const { error: errP } = await supabase.from('referencia_precios').insert(precios.map(p => ({ referencia_id: nuevaRef.id, categoria: p.categoria, precio: p.precio, incluye_impuesto: p.incluye_impuesto ?? false })));
-      if (errP) throw errP;
-    }
-    const { data: completa } = await supabase.from('referencias').select(`*, referencia_precios(*)`).eq('id', nuevaRef.id).single();
-    return res.status(201).json({ ok: true, mensaje: 'Referencia creada exitosamente.', data: completa });
-  } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
-  }
-};
+    const { 
+      referencia, 
+      referencia_corta, 
+      nombre, 
+      grupo, 
+      descripcion, 
+      codigo_barras,
+      presentacion,
+      unidad_medida,
+      costo,
+      impuesto,
+      valor_unitario,
+      tipo_producto,
+      materia_prima,
+      color,
+      troquelado,
+      ancho,
+      fuelle_izquierdo,
+      fuelle_derecho,
+      alto,
+      fuelle_superior,
+      fuelle_fondo,
+      calibre,
+      impresion,
+      colores,
+      tipo_cliente,
+      tipo_impresion,
+      sellado,
+      tratado_cara,
+      medida,
+      requiere_extrusion,
+      requiere_impresion,
+      requiere_refilado,
+      requiere_sellado,
+      creada_por
+    } = req.body;
 
-const editarReferencia = async (req, res) => {
-  try {
-    const { precios, ...campos } = req.body;
-    delete campos.id; delete campos.creada_por; delete campos.created_at;
-    const { data, error } = await supabase.from('referencias').update(campos).eq('id', req.params.id).select().single();
+    const { data, error } = await supabase
+      .from('referencias')
+      .insert({
+        referencia,
+        referencia_corta,
+        nombre,
+        grupo: grupo || null,
+        estado: 'activa',
+        descripcion: descripcion || null,
+        codigo_barras: codigo_barras || null,
+        presentacion: presentacion || null,
+        unidad_medida: unidad_medida || 'unidades',
+        costo: costo || null,
+        impuesto: impuesto || null,
+        valor_unitario: valor_unitario || 0,
+        tipo_producto,
+        materia_prima,
+        color: color || null,
+        troquelado: troquelado || null,
+        ancho,
+        fuelle_izquierdo: fuelle_izquierdo || null,
+        fuelle_derecho: fuelle_derecho || null,
+        alto: alto || null,
+        fuelle_superior: fuelle_superior || null,
+        fuelle_fondo: fuelle_fondo || null,
+        calibre: calibre || null,
+        impresion: impresion !== undefined ? impresion : false,
+        colores: colores || [],
+        tipo_cliente: tipo_cliente || null,
+        tipo_impresion: tipo_impresion || null,
+        sellado,
+        tratado_cara: tratado_cara || null,
+        medida,
+        requiere_extrusion: requiere_extrusion !== undefined ? requiere_extrusion : false,
+        requiere_impresion: requiere_impresion !== undefined ? requiere_impresion : false,
+        requiere_refilado: requiere_refilado !== undefined ? requiere_refilado : false,
+        requiere_sellado: requiere_sellado !== undefined ? requiere_sellado : true,
+        creada_por: creada_por || null
+      })
+      .select()
+      .single();
+
     if (error) throw error;
-    if (!data) return res.status(404).json({ ok: false, mensaje: 'Referencia no encontrada.' });
-    if (precios && Array.isArray(precios)) {
-      await supabase.from('referencia_precios').delete().eq('referencia_id', req.params.id);
-      if (precios.length > 0) {
-        const { error: errP } = await supabase.from('referencia_precios').insert(precios.map(p => ({ referencia_id: req.params.id, categoria: p.categoria, precio: p.precio, incluye_impuesto: p.incluye_impuesto ?? false })));
-        if (errP) throw errP;
-      }
-    }
-    const { data: completa } = await supabase.from('referencias').select(`*, referencia_precios(*)`).eq('id', req.params.id).single();
-    return res.status(200).json({ ok: true, mensaje: 'Referencia actualizada.', data: completa });
+
+    res.status(201).json(data);
   } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
+    console.error('Error en create referencia:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-const cambiarEstadoReferencia = async (req, res) => {
+// =====================================================
+// 4. ACTUALIZAR REFERENCIA
+// =====================================================
+exports.update = async (req, res) => {
   try {
-    const { estado } = req.body;
-    if (!['activa','inactiva'].includes(estado)) return res.status(400).json({ ok: false, mensaje: 'Estado inválido.' });
-    const { data, error } = await supabase.from('referencias').update({ estado }).eq('id', req.params.id).select('id, referencia, nombre, estado').single();
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const { data, error } = await supabase
+      .from('referencias')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
     if (error) throw error;
-    return res.status(200).json({ ok: true, mensaje: 'Estado actualizado.', data });
+    if (!data) return res.status(404).json({ error: 'Referencia no encontrada' });
+
+    res.json(data);
   } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
+    console.error('Error en update referencia:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-module.exports = { listarReferencias, obtenerReferencia, crearReferencia, editarReferencia, cambiarEstadoReferencia };
+// =====================================================
+// 5. ELIMINAR REFERENCIA (SOFT DELETE)
+// =====================================================
+exports.delete = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { error } = await supabase
+      .from('referencias')
+      .update({ estado: 'inactiva' })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({ message: 'Referencia desactivada correctamente' });
+  } catch (err) {
+    console.error('Error en delete referencia:', err);
+    res.status(500).json({ error: err.message });
+  }
+};

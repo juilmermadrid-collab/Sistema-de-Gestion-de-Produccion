@@ -1,9 +1,11 @@
-const { Router } = require('express');
-const { listarReferencias, obtenerReferencia, crearReferencia, editarReferencia, cambiarEstadoReferencia } = require('../controllers/referencias.controller');
-const router = Router();
-router.get('/', listarReferencias);
-router.get('/:id', obtenerReferencia);
-router.post('/', crearReferencia);
-router.put('/:id', editarReferencia);
-router.patch('/:id/estado', cambiarEstadoReferencia);
+const express = require('express');
+const router = express.Router();
+const referenciasController = require('../controllers/referencias.controller');
+
+router.get('/', referenciasController.getAll);
+router.get('/:id', referenciasController.getById);
+router.post('/', referenciasController.create);
+router.put('/:id', referenciasController.update);
+router.delete('/:id', referenciasController.delete);
+
 module.exports = router;

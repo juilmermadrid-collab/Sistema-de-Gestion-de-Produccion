@@ -1,12 +1,10 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const planillasController = require('../controllers/planillas.controller');
 
-const planillasController = require("../controllers/planillas.controller");
-
-router.post("/", planillasController.crearPlanilla);
-router.get("/", planillasController.listarPlanillas);
-router.get("/:id", planillasController.obtenerPlanillaPorId);
-router.post("/:id/tareas", planillasController.agregarTareaPlanilla);
-router.put("/:id/tareas/:tareaId", planillasController.actualizarTareaPlanilla);
+router.get('/', planillasController.getByFechaTurno);
+router.get('/activa', planillasController.getPlanillaActiva);
+router.post('/', planillasController.create);
+router.put('/:id/cerrar', planillasController.cerrarPlanilla);
 
 module.exports = router;

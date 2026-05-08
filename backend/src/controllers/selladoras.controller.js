@@ -1,80 +1,124 @@
-const supabase = require("../config/supabase");
+const supabase = require('../config/supabase');
 
-const listarSelladoras = async (req, res) => {
+// Debug (opcional, puedes borrarlo después)
+console.log('✅ Cargando selladoras.controller.js CON SUPABASE');
+console.log('✅ Supabase cargado:', typeof supabase);
+
+// =====================================================
+// 1. OBTENER TODAS LAS SELLADORAS ACTIVAS
+// =====================================================
+exports.getAll = async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from("selladoras")
-      .select("*")
-      .order("numero", { ascending: true });
+      .from('selladoras')
+      .select('*')
+      .eq('estado', 'activa')
+      .order('numero', { ascending: true });
 
-    if (error) {
-      return res.status(500).json({
-        mensaje: "Error consultando selladoras",
-        error: error.message,
-      });
-    }
+    if (error) throw error;
 
-    return res.json(data);
-  } catch (error) {
-    return res.status(500).json({
-      mensaje: "Error interno del servidor",
-      error: error.message,
-    });
+    res.json(data || []);
+  } catch (err) {
+    console.error('Error en getAll selladoras:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-const actualizarSelladora = async (req, res) => {
+// =====================================================
+// 2. OBTENER SELLADORA POR ID
+// =====================================================
+exports.getById = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const {
-      nombre,
-      sellado_fondo,
-      sellado_lateral,
-      tipos_referencia_permitidos,
-      estado,
-    } = req.body;
-
-    const tiposNormalizados = Array.isArray(tipos_referencia_permitidos)
-      ? tipos_referencia_permitidos
-      : String(tipos_referencia_permitidos || "")
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean);
-
+    
     const { data, error } = await supabase
-      .from("selladoras")
-      .update({
+      .from('selladoras')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Selladora no encontrada' });
+
+    res.json(data);
+  } catch (err) {
+    console.error('Error en getById selladora:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// =====================================================
+// 3. CREAR NUEVA SELLADORA
+// =====================================================
+exports.create = async (req, res) => {
+  try {
+    const { codigo, nombre, numero, sellado_fondo, sellado_lateral, tipos_referencia_permitidos, estado } = req.body;
+    
+    const { data, error } = await supabase
+      .from('selladoras')
+      .insert({
+        codigo,
         nombre,
-        sellado_fondo,
-        sellado_lateral,
-        tipos_referencia_permitidos: tiposNormalizados,
-        estado,
+        numero,
+        sellado_fondo: sellado_fondo !== undefined ? sellado_fondo : true,
+        sellado_lateral: sellado_lateral !== undefined ? sellado_lateral : false,
+        tipos_referencia_permitidos: tipos_referencia_permitidos || [],
+        estado: estado || 'activa'
       })
-      .eq("id", id)
       .select()
       .single();
 
-    if (error) {
-      return res.status(500).json({
-        mensaje: "Error actualizando selladora",
-        error: error.message,
-      });
-    }
+    if (error) throw error;
 
-    return res.json({
-      mensaje: "Selladora actualizada correctamente",
-      data,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      mensaje: "Error interno del servidor",
-      error: error.message,
-    });
+    res.status(201).json(data);
+  } catch (err) {
+    console.error('Error en create selladora:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-module.exports = {
-  listarSelladoras,
-  actualizarSelladora,
+// =====================================================
+// 4. ACTUALIZAR SELLADORA
+// =====================================================
+exports.update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const { data, error } = await supabase
+      .from('selladoras')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Selladora no encontrada' });
+
+    res.json(data);
+  } catch (err) {
+    console.error('Error en update selladora:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// =====================================================
+// 5. ELIMINAR SELLADORA (SOFT DELETE)
+// =====================================================
+exports.delete = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { error } = await supabase
+      .from('selladoras')
+      .update({ estado: 'inactiva' })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({ message: 'Selladora desactivada correctamente' });
+  } catch (err) {
+    console.error('Error en delete selladora:', err);
+    res.status(500).json({ error: err.message });
+  }
 };

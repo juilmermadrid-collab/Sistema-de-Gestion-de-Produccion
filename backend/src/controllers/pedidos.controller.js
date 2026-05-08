@@ -1,46 +1,142 @@
-const { supabase } = require('../config/supabase');
+const supabase = require('../config/supabase');
 
-const listarPedidos = async (req, res) => {
+// =====================================================
+// 1. OBTENER TODOS LOS PEDIDOS
+// =====================================================
+exports.getAll = async (req, res) => {
   try {
-    const { estado_pedido, vendedor_id, page = 1, limit = 20 } = req.query;
-    let query = supabase.from('pedidos').select(`id, numero_pedido, fecha_toma, fecha_entrega_pactada, estado_pedido, total_pedido, created_at, vendedor_id, pedido_items (id, referencia_id, referencia, referencia_corta, nombre_referencia, descripcion_referencia, cantidad_solicitada, valor_unitario, subtotal, destino, estado_produccion)`, { count: 'exact' });
-    if (estado_pedido) query = query.eq('estado_pedido', estado_pedido);
-    else query = query.eq('estado_pedido', 'en_produccion');
-    if (vendedor_id) query = query.eq('vendedor_id', vendedor_id);
-    const from = (parseInt(page) - 1) * parseInt(limit);
-    query = query.range(from, from + parseInt(limit) - 1).order('created_at', { ascending: false });
-    const { data, error, count } = await query;
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select(`
+        *,
+        usuarios:vendedor_id (nombre, correo),
+        items_pedido (
+          *,
+          referencias:referencia_id (referencia, nombre)
+        )
+      `)
+      .order('fecha_toma', { ascending: false });
+
     if (error) throw error;
-    return res.status(200).json({ ok: true, total: count, page: parseInt(page), limit: parseInt(limit), data });
+
+    res.json(data || []);
   } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
+    console.error('Error en getAll pedidos:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-const obtenerPedido = async (req, res) => {
+// =====================================================
+// 2. OBTENER PEDIDO POR ID
+// =====================================================
+exports.getById = async (req, res) => {
   try {
-    const { data, error } = await supabase.from('pedidos').select(`*, pedido_items (id, referencia_id, referencia, referencia_corta, nombre_referencia, descripcion_referencia, cantidad_solicitada, valor_unitario, subtotal, destino, estado_produccion, created_at)`).eq('id', req.params.id).single();
-    if (error) throw error;
-    if (!data) return res.status(404).json({ ok: false, mensaje: 'Pedido no encontrado.' });
-    return res.status(200).json({ ok: true, data });
+    const { id } = req.params;
+    
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select(`
+        *,
+        usuarios:vendedor_id (nombre, correo),
+        items_pedido (
+          *,
+          referencias:referencia_id (referencia, nombre, valor_unitario)
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
+
+    res.json(data);
   } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
+    console.error('Error en getById pedido:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-const consultarDocumentacion = async (req, res) => {
+// =====================================================
+// 3. CREAR NUEVO PEDIDO
+// =====================================================
+exports.create = async (req, res) => {
   try {
-    const { fecha_desde, fecha_hasta } = req.query;
-    let q = supabase.from('ordenes_produccion').select(`id, numero_orden, estado_orden, cantidad_programada, referencia, nombre_referencia, created_at, pedidos (numero_pedido, fecha_toma, fecha_entrega_pactada)`).order('created_at', { ascending: false }).limit(50);
-    if (fecha_desde) q = q.gte('created_at', fecha_desde);
-    if (fecha_hasta) q = q.lte('created_at', fecha_hasta + 'T23:59:59');
-    const { data: ordenes, error } = await q;
-    if (error) throw error;
-    const resumen = ordenes.reduce((acc, o) => { acc[o.estado_orden] = (acc[o.estado_orden] || 0) + 1; return acc; }, {});
-    return res.status(200).json({ ok: true, data: { resumen_estados_ordenes: resumen, ordenes } });
+    const { 
+      numero_pedido, 
+      vendedor_id, 
+      fecha_toma, 
+      fecha_entrega_pactada, 
+      items, 
+      total_pedido 
+    } = req.body;
+
+    // Insertar pedido
+    const { data: pedido, error: pedidoError } = await supabase
+      .from('pedidos')
+      .insert({
+        numero_pedido,
+        vendedor_id,
+        fecha_toma,
+        fecha_entrega_pactada,
+        estado_pedido: 'en_produccion',
+        total_pedido,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (pedidoError) throw pedidoError;
+
+    // Insertar items del pedido
+    if (items && items.length > 0) {
+      const itemsData = items.map(item => ({
+        pedido_id: pedido.id,
+        referencia_id: item.referencia_id,
+        cantidad_solicitada: item.cantidad_solicitada,
+        valor_unitario: item.valor_unitario,
+        subtotal: item.subtotal,
+        destino: item.destino,
+        estado_produccion: 'pendiente_por_material'
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('items_pedido')
+        .insert(itemsData);
+
+      if (itemsError) throw itemsError;
+    }
+
+    res.status(201).json(pedido);
+
   } catch (err) {
-    return res.status(500).json({ ok: false, mensaje: err.message });
+    console.error('Error en create pedido:', err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-module.exports = { listarPedidos, obtenerPedido, consultarDocumentacion };
+// =====================================================
+// 4. ACTUALIZAR PEDIDO
+// =====================================================
+exports.update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const { data, error } = await supabase
+      .from('pedidos')
+      .update({ ...updateData, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    res.json(data);
+  } catch (err) {
+    console.error('Error en update pedido:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
