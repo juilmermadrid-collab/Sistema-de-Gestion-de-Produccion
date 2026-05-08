@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import AuxiliarProduccionRoutes from "../pages/auxiliarProduccion/AuxiliarProduccionRoutes";
+import LiderProduccionRoutes from "../pages/liderProduccion/LiderProduccionRoutes";
 
 const appRoutesStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -147,7 +148,7 @@ const appRoutesStyles = `
   }
 
   .app-nav-status-dot::after {
-    content: ''; position: relative; display: block;
+    content: ''; relative; display: block;
     width: 8px; height: 8px; border-radius: 50%; background: #22c55e;
   }
 
@@ -229,6 +230,7 @@ function AppLayout() {
       <Routes>
         <Route path="/" element={<Navigate to="/auxiliar" />} />
         <Route path="/auxiliar/*" element={<AuxiliarProduccionRoutes />} />
+        <Route path="/lider/*" element={<LiderProduccionRoutes />} />
       </Routes>
     </>
   );
